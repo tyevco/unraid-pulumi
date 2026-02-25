@@ -17,6 +17,7 @@ export { ConnectSettings, ConnectSettingsArgs } from "./connectSettings";
 export { UnifiedSettings, UnifiedSettingsArgs } from "./unifiedSettings";
 export { OidcProvider, OidcProviderArgs } from "./oidcProvider";
 export { DockerFolder, DockerFolderArgs } from "./dockerFolder";
+export { DockgeStack, DockgeStackArgs, DockgeContainerInfo } from "./dockgeStack";
 
 // Data Source Functions
 export {

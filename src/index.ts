@@ -3,6 +3,7 @@ import * as path from "path";
 import * as grpc from "@grpc/grpc-js";
 import { structToObject, objectToStruct } from "./helpers";
 import { configureClient } from "./graphqlClient";
+import { configureDockgeClient } from "./dockgeClient";
 import { dispatchCheck, dispatchDiff, dispatchCreate, dispatchRead, dispatchUpdate, dispatchDelete } from "./provider";
 import { functionHandlers } from "./functions";
 
@@ -50,6 +51,18 @@ const providerImpl = {
       configureClient({
         serverUrl,
         apiKey,
+        verifySsl: verifySsl !== false,
+      });
+    }
+
+    // Configure Dockge client if provided
+    const dockgeUrl = args["dockgeUrl"] || args["unraid:config:dockgeUrl"] || "";
+    const dockgeApiKey = args["dockgeApiKey"] || args["unraid:config:dockgeApiKey"] || "";
+
+    if (dockgeUrl && dockgeApiKey) {
+      configureDockgeClient({
+        url: dockgeUrl,
+        apiKey: dockgeApiKey,
         verifySsl: verifySsl !== false,
       });
     }

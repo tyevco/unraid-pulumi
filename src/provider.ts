@@ -13,6 +13,7 @@ import { connectSettingsResource } from "./resources/connectSettings";
 import { unifiedSettingsResource } from "./resources/unifiedSettings";
 import { oidcProviderResource } from "./resources/oidcProvider";
 import { dockerFolderResource } from "./resources/dockerFolder";
+import { dockgeStackResource } from "./resources/dockgeStack";
 
 import * as grpc from "@grpc/grpc-js";
 
@@ -40,6 +41,7 @@ const resourceHandlers: Record<string, ResourceHandler> = {
   "unraid:index:UnifiedSettings": unifiedSettingsResource,
   "unraid:index:OidcProvider": oidcProviderResource,
   "unraid:index:DockerFolder": dockerFolderResource,
+  "unraid:index:DockgeStack": dockgeStackResource,
 };
 
 function getHandler(call: GrpcCall<any, any>): ResourceHandler | undefined {
