@@ -1,0 +1,9 @@
+name: unraid-basic-example
+runtime: nodejs
+description: Basic example of using the Pulumi Unraid provider
+config:
+  unraid:serverUrl:
+    description: The URL of your Unraid server
+  unraid:apiKey:
+    description: API key for your Unraid server
+    secret: true

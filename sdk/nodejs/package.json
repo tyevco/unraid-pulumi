@@ -1,0 +1,20 @@
+{
+  "name": "@pulumi/unraid",
+  "version": "0.1.0",
+  "description": "Pulumi SDK for managing Unraid servers",
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@pulumi/pulumi": "^3.132.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "pulumi": {
+    "resource": true
+  }
+}

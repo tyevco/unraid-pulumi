@@ -1,0 +1,11 @@
+{
+  "name": "unraid-basic-example",
+  "main": "index.ts",
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {
+    "@pulumi/pulumi": "^3.132.0",
+    "@pulumi/unraid": "file:../../sdk/nodejs"
+  }
+}

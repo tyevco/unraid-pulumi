@@ -1,0 +1,716 @@
+{
+  "name": "unraid",
+  "displayName": "Unraid",
+  "version": "0.1.0",
+  "description": "A Pulumi provider for managing Unraid servers via the GraphQL API",
+  "keywords": ["pulumi", "unraid", "category/infrastructure"],
+  "license": "Apache-2.0",
+  "publisher": "unraid-pulumi",
+  "repository": "https://github.com/tyevco/unraid-pulumi",
+  "config": {
+    "variables": {
+      "serverUrl": {
+        "type": "string",
+        "description": "The URL of the Unraid server (e.g., http://192.168.1.100 or https://tower.local)"
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "API key for authenticating with the Unraid GraphQL API",
+        "secret": true
+      },
+      "verifySsl": {
+        "type": "boolean",
+        "description": "Whether to verify SSL certificates when connecting to the Unraid server",
+        "default": true
+      }
+    },
+    "required": ["serverUrl", "apiKey"]
+  },
+  "provider": {
+    "description": "The Unraid provider configuration.",
+    "inputProperties": {
+      "serverUrl": {
+        "type": "string",
+        "description": "The URL of the Unraid server (e.g., http://192.168.1.100 or https://tower.local)"
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "API key for authenticating with the Unraid GraphQL API",
+        "secret": true
+      },
+      "verifySsl": {
+        "type": "boolean",
+        "description": "Whether to verify SSL certificates when connecting to the Unraid server",
+        "default": true
+      }
+    },
+    "requiredInputs": ["serverUrl", "apiKey"],
+    "properties": {
+      "serverUrl": {
+        "type": "string",
+        "description": "The URL of the Unraid server"
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "API key for authenticating with the Unraid GraphQL API",
+        "secret": true
+      },
+      "verifySsl": {
+        "type": "boolean",
+        "description": "Whether to verify SSL certificates"
+      }
+    },
+    "required": ["serverUrl", "apiKey"]
+  },
+  "types": {
+    "unraid:index:Permission": {
+      "type": "object",
+      "description": "A permission definition mapping a resource to allowed actions.",
+      "properties": {
+        "resource": {
+          "type": "string",
+          "description": "The resource this permission applies to (e.g., ARRAY, DOCKER, VMS, SHARE)"
+        },
+        "actions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The actions allowed on this resource (CREATE_ANY, READ_ANY, UPDATE_ANY, DELETE_ANY, etc.)"
+        }
+      },
+      "required": ["resource", "actions"]
+    },
+    "unraid:index:ContainerPort": {
+      "type": "object",
+      "description": "A port mapping for a Docker container.",
+      "properties": {
+        "ip": { "type": "string", "description": "The IP address bound to this port" },
+        "privatePort": { "type": "integer", "description": "The container's internal port" },
+        "publicPort": { "type": "integer", "description": "The host's mapped port" },
+        "type": { "type": "string", "description": "The port type (TCP or UDP)" }
+      }
+    },
+    "unraid:index:Role": {
+      "type": "string",
+      "description": "A role that can be assigned to an API key.",
+      "enum": [
+        { "name": "Admin", "value": "ADMIN", "description": "Full administrative access" },
+        { "name": "Connect", "value": "CONNECT", "description": "Unraid Connect access" },
+        { "name": "Guest", "value": "GUEST", "description": "Limited guest access" },
+        { "name": "Viewer", "value": "VIEWER", "description": "Read-only viewer access" }
+      ]
+    },
+    "unraid:index:ContainerState": {
+      "type": "string",
+      "description": "The desired or actual state of a Docker container.",
+      "enum": [
+        { "name": "Running", "value": "started", "description": "Container is running" },
+        { "name": "Stopped", "value": "stopped", "description": "Container is stopped" },
+        { "name": "Paused", "value": "paused", "description": "Container is paused" }
+      ]
+    },
+    "unraid:index:VmState": {
+      "type": "string",
+      "description": "The desired or actual state of a virtual machine.",
+      "enum": [
+        { "name": "Running", "value": "started", "description": "VM is running" },
+        { "name": "Stopped", "value": "stopped", "description": "VM is stopped/shut off" },
+        { "name": "Paused", "value": "paused", "description": "VM is paused" }
+      ]
+    },
+    "unraid:index:ArrayDesiredState": {
+      "type": "string",
+      "description": "The desired state of the Unraid array.",
+      "enum": [
+        { "name": "Started", "value": "START", "description": "Array should be started" },
+        { "name": "Stopped", "value": "STOP", "description": "Array should be stopped" }
+      ]
+    },
+    "unraid:index:NotificationImportance": {
+      "type": "string",
+      "description": "The importance level of a notification.",
+      "enum": [
+        { "name": "Alert", "value": "ALERT", "description": "Critical alert notification" },
+        { "name": "Warning", "value": "WARNING", "description": "Warning notification" },
+        { "name": "Info", "value": "INFO", "description": "Informational notification" }
+      ]
+    },
+    "unraid:index:DiskFsType": {
+      "type": "string",
+      "description": "Filesystem type of a disk.",
+      "enum": [
+        { "name": "Xfs", "value": "XFS" },
+        { "name": "Btrfs", "value": "BTRFS" },
+        { "name": "Vfat", "value": "VFAT" },
+        { "name": "Zfs", "value": "ZFS" },
+        { "name": "Ext4", "value": "EXT4" },
+        { "name": "Ntfs", "value": "NTFS" }
+      ]
+    },
+    "unraid:index:ArrayDiskInfo": {
+      "type": "object",
+      "description": "Information about a disk in the Unraid array.",
+      "properties": {
+        "id": { "type": "string", "description": "Disk identifier" },
+        "name": { "type": "string", "description": "Disk name" },
+        "device": { "type": "string", "description": "Device path" },
+        "type": { "type": "string", "description": "Disk type (DATA, PARITY, CACHE, FLASH)" },
+        "status": { "type": "string", "description": "Disk status" },
+        "size": { "type": "string", "description": "Total disk size" },
+        "fsType": { "type": "string", "description": "Filesystem type" },
+        "temp": { "type": "integer", "description": "Temperature in configured units" },
+        "numReads": { "type": "string", "description": "Number of reads" },
+        "numWrites": { "type": "string", "description": "Number of writes" },
+        "numErrors": { "type": "integer", "description": "Number of errors" },
+        "color": { "type": "string", "description": "Status color indicator" }
+      }
+    },
+    "unraid:index:ShareInfo": {
+      "type": "object",
+      "description": "Information about an Unraid user share.",
+      "properties": {
+        "name": { "type": "string", "description": "Share name" },
+        "comment": { "type": "string", "description": "Share description/comment" },
+        "allocator": { "type": "string", "description": "Allocation method" },
+        "floor": { "type": "string", "description": "Minimum free space" },
+        "splitLevel": { "type": "string", "description": "Split level setting" },
+        "free": { "type": "string", "description": "Free space" },
+        "size": { "type": "string", "description": "Total size" },
+        "used": { "type": "string", "description": "Used space" },
+        "cachePool": { "type": "string", "description": "Associated cache pool" },
+        "useCache": { "type": "string", "description": "Cache usage mode" },
+        "color": { "type": "string", "description": "Status color indicator" }
+      }
+    },
+    "unraid:index:UpsServiceState": {
+      "type": "string",
+      "description": "UPS service state.",
+      "enum": [
+        { "name": "Enable", "value": "ENABLE", "description": "UPS monitoring enabled" },
+        { "name": "Disable", "value": "DISABLE", "description": "UPS monitoring disabled" }
+      ]
+    },
+    "unraid:index:DockerContainerInfo": {
+      "type": "object",
+      "description": "Information about a Docker container.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "state": { "type": "string" },
+        "status": { "type": "string" },
+        "image": { "type": "string" },
+        "autoStart": { "type": "boolean" },
+        "ports": { "type": "array", "items": { "$ref": "#/types/unraid:index:ContainerPort" } }
+      }
+    },
+    "unraid:index:VmDomainInfo": {
+      "type": "object",
+      "description": "Information about a virtual machine domain.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "state": { "type": "string" },
+        "coreCount": { "type": "integer" },
+        "threadCount": { "type": "integer" },
+        "memorySize": { "type": "string" }
+      }
+    }
+  },
+  "resources": {
+    "unraid:index:ApiKey": {
+      "description": "Manages an API key on the Unraid server. API keys provide authentication for programmatic access to the Unraid API.",
+      "inputProperties": {
+        "name": {
+          "type": "string",
+          "description": "The display name for the API key."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of what this API key is used for."
+        },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Roles assigned to this API key (ADMIN, CONNECT, GUEST, VIEWER)."
+        },
+        "permissions": {
+          "type": "array",
+          "items": { "$ref": "#/types/unraid:index:Permission" },
+          "description": "Specific permissions assigned to this API key."
+        }
+      },
+      "requiredInputs": ["name", "roles"],
+      "properties": {
+        "name": { "type": "string", "description": "The display name for the API key." },
+        "description": { "type": "string", "description": "A description of what this API key is used for." },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Roles assigned to this API key."
+        },
+        "permissions": {
+          "type": "array",
+          "items": { "$ref": "#/types/unraid:index:Permission" },
+          "description": "Specific permissions assigned to this API key."
+        },
+        "key": {
+          "type": "string",
+          "description": "The generated API key value. This is only available at creation time.",
+          "secret": true
+        }
+      },
+      "required": ["name", "roles"]
+    },
+    "unraid:index:DockerContainer": {
+      "description": "Manages the state of a Docker container on the Unraid server. This resource controls whether a container is running, stopped, or paused.",
+      "inputProperties": {
+        "containerId": {
+          "type": "string",
+          "description": "The ID of the Docker container to manage. Use getDockerContainers to discover container IDs."
+        },
+        "state": {
+          "type": "string",
+          "description": "The desired state of the container: 'started', 'stopped', or 'paused'."
+        }
+      },
+      "requiredInputs": ["containerId", "state"],
+      "properties": {
+        "containerId": { "type": "string", "description": "The ID of the Docker container." },
+        "state": { "type": "string", "description": "The current state of the container." },
+        "name": { "type": "string", "description": "The name of the container." },
+        "image": { "type": "string", "description": "The container image." },
+        "status": { "type": "string", "description": "Human-readable container status." }
+      },
+      "required": ["containerId", "state"]
+    },
+    "unraid:index:DockerAutostart": {
+      "description": "Manages autostart configuration for Docker containers on the Unraid server.",
+      "inputProperties": {
+        "containerId": {
+          "type": "string",
+          "description": "The ID of the Docker container."
+        },
+        "autoStart": {
+          "type": "boolean",
+          "description": "Whether the container should automatically start when the array starts."
+        },
+        "wait": {
+          "type": "integer",
+          "description": "Seconds to wait after starting this container before starting the next one."
+        }
+      },
+      "requiredInputs": ["containerId", "autoStart"],
+      "properties": {
+        "containerId": { "type": "string", "description": "The ID of the Docker container." },
+        "autoStart": { "type": "boolean", "description": "Whether autostart is enabled." },
+        "wait": { "type": "integer", "description": "Wait time in seconds." }
+      },
+      "required": ["containerId", "autoStart"]
+    },
+    "unraid:index:VirtualMachine": {
+      "description": "Manages the state of a virtual machine on the Unraid server. Controls whether a VM is running, stopped, or paused.",
+      "inputProperties": {
+        "vmId": {
+          "type": "string",
+          "description": "The ID of the virtual machine to manage. Use getVirtualMachines to discover VM IDs."
+        },
+        "state": {
+          "type": "string",
+          "description": "The desired state of the VM: 'started', 'stopped', or 'paused'."
+        }
+      },
+      "requiredInputs": ["vmId", "state"],
+      "properties": {
+        "vmId": { "type": "string", "description": "The ID of the virtual machine." },
+        "state": { "type": "string", "description": "The current state of the VM." },
+        "name": { "type": "string", "description": "The name of the VM." },
+        "coreCount": { "type": "integer", "description": "Number of CPU cores assigned." },
+        "threadCount": { "type": "integer", "description": "Number of CPU threads assigned." }
+      },
+      "required": ["vmId", "state"]
+    },
+    "unraid:index:ArrayState": {
+      "description": "Manages the state of the Unraid disk array. Controls whether the array is started or stopped.",
+      "inputProperties": {
+        "state": {
+          "type": "string",
+          "description": "The desired state of the array: 'START' or 'STOP'."
+        }
+      },
+      "requiredInputs": ["state"],
+      "properties": {
+        "state": { "type": "string", "description": "The current state of the array." },
+        "arrayState": { "type": "string", "description": "The detailed array state enum value." },
+        "capacity": {
+          "type": "object",
+          "description": "Array capacity information.",
+          "properties": {
+            "kilobytes": { "type": "string" },
+            "disks": { "type": "integer" }
+          }
+        }
+      },
+      "required": ["state"]
+    },
+    "unraid:index:Notification": {
+      "description": "Creates a notification on the Unraid server.",
+      "inputProperties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the notification."
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject line of the notification."
+        },
+        "message": {
+          "type": "string",
+          "description": "The notification message body."
+        },
+        "importance": {
+          "type": "string",
+          "description": "The importance level: 'ALERT', 'WARNING', or 'INFO'."
+        },
+        "link": {
+          "type": "string",
+          "description": "An optional link URL associated with the notification."
+        }
+      },
+      "requiredInputs": ["title", "subject", "message", "importance"],
+      "properties": {
+        "title": { "type": "string", "description": "The notification title." },
+        "subject": { "type": "string", "description": "The notification subject." },
+        "message": { "type": "string", "description": "The notification message." },
+        "importance": { "type": "string", "description": "The importance level." },
+        "link": { "type": "string", "description": "Associated link URL." },
+        "timestamp": { "type": "string", "description": "When the notification was created." },
+        "notificationType": { "type": "string", "description": "Whether this is UNREAD or ARCHIVE." }
+      },
+      "required": ["title", "subject", "message", "importance"]
+    },
+    "unraid:index:RcloneRemote": {
+      "description": "Manages an RClone remote configuration for backup operations on the Unraid server.",
+      "inputProperties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the RClone remote."
+        },
+        "remoteType": {
+          "type": "string",
+          "description": "The type of RClone remote (e.g., 's3', 'b2', 'drive', 'dropbox')."
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Configuration parameters for the remote (varies by remote type)."
+        }
+      },
+      "requiredInputs": ["name", "remoteType"],
+      "properties": {
+        "name": { "type": "string", "description": "The name of the RClone remote." },
+        "remoteType": { "type": "string", "description": "The type of RClone remote." },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Configuration parameters for the remote."
+        }
+      },
+      "required": ["name", "remoteType"]
+    },
+    "unraid:index:UpsConfig": {
+      "description": "Manages UPS (Uninterruptible Power Supply) configuration on the Unraid server.",
+      "inputProperties": {
+        "service": {
+          "type": "string",
+          "description": "UPS service state: 'ENABLE' or 'DISABLE'."
+        },
+        "upsCable": {
+          "type": "string",
+          "description": "UPS cable type (USB, SIMPLE, SMART, ETHER, CUSTOM)."
+        },
+        "customUpsCable": {
+          "type": "string",
+          "description": "Custom UPS cable specification (when upsCable is CUSTOM)."
+        },
+        "upsType": {
+          "type": "string",
+          "description": "UPS type (USB, APCSMART, NET, SNMP, DUMB, PCNET, MODBUS)."
+        },
+        "device": {
+          "type": "string",
+          "description": "UPS device path."
+        },
+        "batteryLevel": {
+          "type": "integer",
+          "description": "Battery level threshold for shutdown (percentage)."
+        },
+        "minutes": {
+          "type": "integer",
+          "description": "Minutes of battery runtime before shutdown."
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Timeout in seconds."
+        },
+        "killUps": {
+          "type": "string",
+          "description": "Whether to kill UPS power after shutdown: 'YES' or 'NO'."
+        }
+      },
+      "requiredInputs": ["service"],
+      "properties": {
+        "service": { "type": "string", "description": "UPS service state." },
+        "upsCable": { "type": "string", "description": "UPS cable type." },
+        "customUpsCable": { "type": "string", "description": "Custom cable specification." },
+        "upsType": { "type": "string", "description": "UPS type." },
+        "device": { "type": "string", "description": "Device path." },
+        "batteryLevel": { "type": "integer", "description": "Battery level threshold." },
+        "minutes": { "type": "integer", "description": "Minutes threshold." },
+        "timeout": { "type": "integer", "description": "Timeout in seconds." },
+        "killUps": { "type": "string", "description": "Kill UPS power setting." }
+      },
+      "required": ["service"]
+    },
+    "unraid:index:Plugin": {
+      "description": "Manages a plugin installation on the Unraid server.",
+      "inputProperties": {
+        "name": {
+          "type": "string",
+          "description": "The plugin name or URL to install."
+        },
+        "restart": {
+          "type": "boolean",
+          "description": "Whether to restart the server after plugin installation.",
+          "default": false
+        }
+      },
+      "requiredInputs": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "The plugin name or URL." },
+        "restart": { "type": "boolean", "description": "Whether restart was requested." }
+      },
+      "required": ["name"]
+    },
+    "unraid:index:Theme": {
+      "description": "Manages the Unraid WebUI theme/customization.",
+      "inputProperties": {
+        "theme": {
+          "type": "string",
+          "description": "The theme name: 'azure', 'black', 'gray', or 'white'."
+        }
+      },
+      "requiredInputs": ["theme"],
+      "properties": {
+        "theme": { "type": "string", "description": "The active theme name." },
+        "banner": { "type": "boolean", "description": "Whether the banner is shown." },
+        "bannerGradient": { "type": "boolean", "description": "Whether the banner gradient is enabled." }
+      },
+      "required": ["theme"]
+    },
+    "unraid:index:ConnectSettings": {
+      "description": "Manages Unraid Connect remote access settings.",
+      "inputProperties": {
+        "accessType": {
+          "type": "string",
+          "description": "WAN access type: 'DYNAMIC', 'ALWAYS', or 'DISABLED'."
+        },
+        "forwardType": {
+          "type": "string",
+          "description": "Port forward type: 'UPNP' or 'STATIC'."
+        },
+        "port": {
+          "type": "integer",
+          "description": "The port for remote access."
+        }
+      },
+      "requiredInputs": ["accessType"],
+      "properties": {
+        "accessType": { "type": "string", "description": "WAN access type." },
+        "forwardType": { "type": "string", "description": "Port forward type." },
+        "port": { "type": "integer", "description": "Remote access port." }
+      },
+      "required": ["accessType"]
+    }
+  },
+  "functions": {
+    "unraid:index:getSystemInfo": {
+      "description": "Get comprehensive system information from the Unraid server.",
+      "outputs": {
+        "properties": {
+          "hostname": { "type": "string", "description": "Server hostname" },
+          "version": { "type": "string", "description": "Unraid version" },
+          "cpuModel": { "type": "string", "description": "CPU model name" },
+          "cpuCores": { "type": "integer", "description": "Number of CPU cores" },
+          "cpuThreads": { "type": "integer", "description": "Number of CPU threads" },
+          "memoryTotal": { "type": "string", "description": "Total memory" },
+          "motherboard": { "type": "string", "description": "Motherboard model" }
+        },
+        "required": ["hostname", "version"]
+      }
+    },
+    "unraid:index:getDockerContainers": {
+      "description": "List all Docker containers on the Unraid server.",
+      "outputs": {
+        "properties": {
+          "containers": {
+            "type": "array",
+            "items": { "$ref": "#/types/unraid:index:DockerContainerInfo" },
+            "description": "List of Docker containers"
+          }
+        },
+        "required": ["containers"]
+      }
+    },
+    "unraid:index:getVirtualMachines": {
+      "description": "List all virtual machines on the Unraid server.",
+      "outputs": {
+        "properties": {
+          "vms": {
+            "type": "array",
+            "items": { "$ref": "#/types/unraid:index:VmDomainInfo" },
+            "description": "List of virtual machines"
+          }
+        },
+        "required": ["vms"]
+      }
+    },
+    "unraid:index:getShares": {
+      "description": "List all user shares on the Unraid server.",
+      "outputs": {
+        "properties": {
+          "shares": {
+            "type": "array",
+            "items": { "$ref": "#/types/unraid:index:ShareInfo" },
+            "description": "List of user shares"
+          }
+        },
+        "required": ["shares"]
+      }
+    },
+    "unraid:index:getArrayStatus": {
+      "description": "Get the current status of the Unraid disk array.",
+      "outputs": {
+        "properties": {
+          "state": { "type": "string", "description": "Array state (STARTED, STOPPED, etc.)" },
+          "capacity": { "type": "string", "description": "Total array capacity" },
+          "diskCount": { "type": "integer", "description": "Number of disks in the array" },
+          "disks": {
+            "type": "array",
+            "items": { "$ref": "#/types/unraid:index:ArrayDiskInfo" },
+            "description": "List of array disks"
+          },
+          "parities": {
+            "type": "array",
+            "items": { "$ref": "#/types/unraid:index:ArrayDiskInfo" },
+            "description": "List of parity disks"
+          },
+          "caches": {
+            "type": "array",
+            "items": { "$ref": "#/types/unraid:index:ArrayDiskInfo" },
+            "description": "List of cache disks"
+          }
+        },
+        "required": ["state"]
+      }
+    },
+    "unraid:index:getDisks": {
+      "description": "List all physical disks on the Unraid server.",
+      "outputs": {
+        "properties": {
+          "disks": {
+            "type": "array",
+            "items": { "$ref": "#/types/unraid:index:ArrayDiskInfo" },
+            "description": "List of physical disks"
+          }
+        },
+        "required": ["disks"]
+      }
+    },
+    "unraid:index:getNotifications": {
+      "description": "List notifications on the Unraid server.",
+      "inputs": {
+        "properties": {
+          "importance": { "type": "string", "description": "Filter by importance: ALERT, WARNING, or INFO" },
+          "type": { "type": "string", "description": "Filter by type: UNREAD or ARCHIVE" },
+          "limit": { "type": "integer", "description": "Maximum number of notifications to return" }
+        }
+      },
+      "outputs": {
+        "properties": {
+          "notifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "title": { "type": "string" },
+                "subject": { "type": "string" },
+                "description": { "type": "string" },
+                "importance": { "type": "string" },
+                "timestamp": { "type": "string" }
+              }
+            },
+            "description": "List of notifications"
+          }
+        },
+        "required": ["notifications"]
+      }
+    },
+    "unraid:index:getUpsStatus": {
+      "description": "Get UPS device status information.",
+      "outputs": {
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "status": { "type": "string" },
+                "batteryCharge": { "type": "number" },
+                "batteryRuntime": { "type": "number" },
+                "inputVoltage": { "type": "number" },
+                "outputVoltage": { "type": "number" },
+                "load": { "type": "number" }
+              }
+            },
+            "description": "List of UPS devices"
+          }
+        },
+        "required": ["devices"]
+      }
+    },
+    "unraid:index:getNetwork": {
+      "description": "Get network information and access URLs.",
+      "outputs": {
+        "properties": {
+          "accessUrls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" },
+                "name": { "type": "string" },
+                "ipv4": { "type": "string" },
+                "ipv6": { "type": "string" }
+              }
+            },
+            "description": "List of access URLs by type"
+          }
+        },
+        "required": ["accessUrls"]
+      }
+    }
+  },
+  "language": {
+    "nodejs": {
+      "packageName": "@pulumi/unraid",
+      "packageDescription": "A Pulumi provider for managing Unraid servers",
+      "dependencies": {
+        "@apollo/client": "^3.11.0",
+        "cross-fetch": "^4.0.0",
+        "graphql": "^16.9.0"
+      }
+    }
+  }
+}

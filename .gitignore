@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.pulumi/
+
+# Pulumi stack configs (except examples)
+Pulumi.*.yaml
+!examples/**/Pulumi.*.yaml
