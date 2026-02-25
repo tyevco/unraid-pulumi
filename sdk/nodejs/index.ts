@@ -14,6 +14,9 @@ export { UpsConfig, UpsConfigArgs } from "./upsConfig";
 export { Plugin, PluginArgs } from "./plugin";
 export { Theme, ThemeArgs } from "./theme";
 export { ConnectSettings, ConnectSettingsArgs } from "./connectSettings";
+export { UnifiedSettings, UnifiedSettingsArgs } from "./unifiedSettings";
+export { OidcProvider, OidcProviderArgs } from "./oidcProvider";
+export { DockerFolder, DockerFolderArgs } from "./dockerFolder";
 
 // Data Source Functions
 export {
@@ -26,4 +29,7 @@ export {
   getNotifications, getNotificationsOutput, GetNotificationsResult, NotificationInfo,
   getUpsStatus, getUpsStatusOutput, GetUpsStatusResult, UpsDeviceInfo,
   getNetwork, getNetworkOutput, GetNetworkResult, AccessUrlInfo,
+  getSystemVars, getSystemVarsOutput, GetSystemVarsResult,
+  getSettings, getSettingsOutput, GetSettingsResult, SsoProviderSummary,
+  getDockerOrganizer, getDockerOrganizerOutput, GetDockerOrganizerResult, DockerFolderInfo, DockerViewPreferences,
 } from "./getters";

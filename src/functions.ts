@@ -1,7 +1,7 @@
 import * as grpc from "@grpc/grpc-js";
 import { structToObject, objectToStruct, GrpcCallback, GrpcCall } from "./helpers";
 import { query } from "./graphqlClient";
-import { GET_SYSTEM_INFO, GET_SHARES, GET_DISKS, GET_NETWORK, GET_UPS_DEVICES, GET_PLUGINS } from "./queries/system";
+import { GET_SYSTEM_INFO, GET_SHARES, GET_DISKS, GET_NETWORK, GET_UPS_DEVICES, GET_PLUGINS, GET_VARS, GET_SETTINGS, GET_DOCKER_ORGANIZER } from "./queries/system";
 import { GET_DOCKER_CONTAINERS } from "./queries/docker";
 import { GET_VMS } from "./queries/vm";
 import { GET_ARRAY } from "./queries/array";
@@ -258,6 +258,122 @@ async function handleGetNetwork(call: GrpcCall<any, any>, callback: GrpcCallback
   }
 }
 
+async function handleGetSystemVars(call: GrpcCall<any, any>, callback: GrpcCallback<any>) {
+  try {
+    const result = await query(GET_VARS);
+    const vars = result.vars || {};
+
+    // Return all vars as a flat object
+    const outputs: Record<string, any> = {};
+    const fields = [
+      "version", "name", "timeZone", "comment", "security", "workgroup", "domain",
+      "domainShort", "hideDotFiles", "localMaster", "enableFruit", "useNtp",
+      "ntpServer1", "ntpServer2", "ntpServer3", "ntpServer4",
+      "sysModel", "sysArraySlots", "sysCacheSlots", "sysFlashSlots",
+      "useSsl", "port", "portssl", "localTld", "bindMgt",
+      "useTelnet", "porttelnet", "useSsh", "portssh",
+      "startPage", "startArray", "spindownDelay", "queueDepth", "spinupGroups",
+      "defaultFormat", "defaultFsType", "shutdownTimeout",
+      "shareDisk", "shareUser", "shareUserInclude", "shareUserExclude",
+      "shareSmbEnabled", "shareNfsEnabled", "shareAfpEnabled",
+      "shareInitialOwner", "shareInitialGroup",
+      "shareCacheEnabled", "shareCacheFloor", "shareMoverSchedule", "shareMoverLogging",
+      "shareAvahiEnabled", "shareAvahiSmbName", "shareAvahiSmbModel",
+      "shareAvahiAfpName", "shareAvahiAfpModel",
+      "safeMode", "startMode", "configValid", "joinStatus", "deviceCount",
+      "flashGuid", "flashProduct", "flashVendor",
+      "regCheck", "regTy", "regState", "regTo",
+      "sbName", "sbVersion", "sbState", "sbClean", "sbNumDisks",
+      "mdColor", "mdNumDisks", "mdNumDisabled", "mdNumInvalid",
+      "mdNumMissing", "mdNumNew", "mdNumErased", "mdResync",
+      "mdResyncAction", "mdState", "mdVersion",
+      "cacheNumDevices", "cacheSbNumDisks",
+      "fsState", "fsProgress", "fsCopyPrcnt", "fsNumMounted", "fsNumUnmountable",
+      "shareCount", "shareSmbCount", "shareNfsCount", "shareAfpCount", "shareMoverActive",
+    ];
+
+    for (const field of fields) {
+      if (vars[field] !== undefined && vars[field] !== null) {
+        outputs[field] = vars[field];
+      }
+    }
+
+    const response = new providerProto.InvokeResponse();
+    response.setReturn(objectToStruct(outputs));
+    callback(null, response);
+  } catch (err: any) {
+    const response = new providerProto.InvokeResponse();
+    const failure = new providerProto.CheckFailure();
+    failure.setReason(`Failed to get system vars: ${err.message}`);
+    response.addFailures(failure);
+    callback(null, response);
+  }
+}
+
+async function handleGetSettings(call: GrpcCall<any, any>, callback: GrpcCallback<any>) {
+  try {
+    const result = await query(GET_SETTINGS);
+    const settings = result.settings;
+
+    const outputs = {
+      dataSchema: settings?.unified?.dataSchema || {},
+      uiSchema: settings?.unified?.uiSchema || {},
+      values: settings?.unified?.values || {},
+      apiVersion: settings?.api?.version || "",
+      apiPlugins: settings?.api?.plugins || [],
+      sandbox: settings?.api?.sandbox ?? false,
+      ssoProviders: (settings?.sso?.providers || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        issuerUrl: p.issuerUrl,
+        clientId: p.clientId,
+      })),
+    };
+
+    const response = new providerProto.InvokeResponse();
+    response.setReturn(objectToStruct(outputs));
+    callback(null, response);
+  } catch (err: any) {
+    const response = new providerProto.InvokeResponse();
+    const failure = new providerProto.CheckFailure();
+    failure.setReason(`Failed to get settings: ${err.message}`);
+    response.addFailures(failure);
+    callback(null, response);
+  }
+}
+
+async function handleGetDockerOrganizer(call: GrpcCall<any, any>, callback: GrpcCallback<any>) {
+  try {
+    const result = await query(GET_DOCKER_ORGANIZER);
+    const organizer = result.docker?.organizer;
+
+    const outputs = {
+      folders: (organizer?.folders || []).map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        icon: f.icon || "",
+        containers: f.containers || [],
+        expanded: f.expanded ?? true,
+      })),
+      preferences: {
+        viewMode: organizer?.preferences?.viewMode || "",
+        sortBy: organizer?.preferences?.sortBy || "",
+        sortOrder: organizer?.preferences?.sortOrder || "",
+      },
+    };
+
+    const response = new providerProto.InvokeResponse();
+    response.setReturn(objectToStruct(outputs));
+    callback(null, response);
+  } catch (err: any) {
+    const response = new providerProto.InvokeResponse();
+    const failure = new providerProto.CheckFailure();
+    failure.setReason(`Failed to get Docker organizer: ${err.message}`);
+    response.addFailures(failure);
+    callback(null, response);
+  }
+}
+
 export const functionHandlers: Record<string, FunctionHandler> = {
   "unraid:index:getSystemInfo": handleGetSystemInfo,
   "unraid:index:getDockerContainers": handleGetDockerContainers,
@@ -268,4 +384,7 @@ export const functionHandlers: Record<string, FunctionHandler> = {
   "unraid:index:getNotifications": handleGetNotifications,
   "unraid:index:getUpsStatus": handleGetUpsStatus,
   "unraid:index:getNetwork": handleGetNetwork,
+  "unraid:index:getSystemVars": handleGetSystemVars,
+  "unraid:index:getSettings": handleGetSettings,
+  "unraid:index:getDockerOrganizer": handleGetDockerOrganizer,
 };

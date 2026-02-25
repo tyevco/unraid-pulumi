@@ -227,3 +227,100 @@ export function getNetwork(opts?: pulumi.InvokeOptions): Promise<GetNetworkResul
 export function getNetworkOutput(opts?: pulumi.InvokeOutputOptions): pulumi.Output<GetNetworkResult> {
   return pulumi.runtime.invokeOutput("unraid:index:getNetwork", {}, opts);
 }
+
+// --- getSystemVars ---
+
+export interface GetSystemVarsResult {
+  name: string;
+  version: string;
+  timeZone: string;
+  security: string;
+  workgroup: string;
+  useSsl: boolean;
+  port: number;
+  portssl: number;
+  useSsh: boolean;
+  portssh: number;
+  startArray: boolean;
+  spindownDelay: string;
+  defaultFsType: string;
+  shutdownTimeout: number;
+  shareSmbEnabled: boolean;
+  shareNfsEnabled: boolean;
+  shareMoverSchedule: string;
+  shareMoverActive: boolean;
+  mdState: string;
+  mdNumDisks: number;
+  fsState: string;
+  regTy: string;
+  regState: string;
+  configValid: boolean;
+  [key: string]: any;
+}
+
+/** Get all system configuration variables (130+ fields). */
+export function getSystemVars(opts?: pulumi.InvokeOptions): Promise<GetSystemVarsResult> {
+  return pulumi.runtime.invoke("unraid:index:getSystemVars", {}, opts);
+}
+
+export function getSystemVarsOutput(opts?: pulumi.InvokeOutputOptions): pulumi.Output<GetSystemVarsResult> {
+  return pulumi.runtime.invokeOutput("unraid:index:getSystemVars", {}, opts);
+}
+
+// --- getSettings ---
+
+export interface SsoProviderSummary {
+  id: string;
+  name: string;
+  issuerUrl: string;
+  clientId: string;
+}
+
+export interface GetSettingsResult {
+  dataSchema: Record<string, any>;
+  uiSchema: Record<string, any>;
+  values: Record<string, any>;
+  apiVersion: string;
+  apiPlugins: string[];
+  sandbox: boolean;
+  ssoProviders: SsoProviderSummary[];
+}
+
+/** Get the unified settings including JSON Schema, values, and API config. */
+export function getSettings(opts?: pulumi.InvokeOptions): Promise<GetSettingsResult> {
+  return pulumi.runtime.invoke("unraid:index:getSettings", {}, opts);
+}
+
+export function getSettingsOutput(opts?: pulumi.InvokeOutputOptions): pulumi.Output<GetSettingsResult> {
+  return pulumi.runtime.invokeOutput("unraid:index:getSettings", {}, opts);
+}
+
+// --- getDockerOrganizer ---
+
+export interface DockerFolderInfo {
+  id: string;
+  name: string;
+  icon: string;
+  containers: string[];
+  expanded: boolean;
+}
+
+export interface DockerViewPreferences {
+  viewMode: string;
+  sortBy: string;
+  sortOrder: string;
+}
+
+export interface GetDockerOrganizerResult {
+  folders: DockerFolderInfo[];
+  preferences: DockerViewPreferences;
+}
+
+/** Get the Docker organizer configuration including folders and view preferences. */
+export function getDockerOrganizer(opts?: pulumi.InvokeOptions): Promise<GetDockerOrganizerResult> {
+  return pulumi.runtime.invoke("unraid:index:getDockerOrganizer", {}, opts);
+}
+
+export function getDockerOrganizerOutput(opts?: pulumi.InvokeOutputOptions): pulumi.Output<GetDockerOrganizerResult> {
+  return pulumi.runtime.invokeOutput("unraid:index:getDockerOrganizer", {}, opts);
+}

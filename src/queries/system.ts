@@ -227,3 +227,319 @@ export const DELETE_RCLONE_REMOTE = gql`
     }
   }
 `;
+
+// --- Unified Settings ---
+
+export const GET_SETTINGS = gql`
+  query GetSettings {
+    settings {
+      id
+      unified {
+        id
+        dataSchema
+        uiSchema
+        values
+      }
+      sso {
+        providers {
+          id
+          name
+          issuerUrl
+          clientId
+        }
+      }
+      api {
+        version
+        extraOrigins
+        sandbox
+        ssoSubIds
+        plugins
+      }
+    }
+  }
+`;
+
+export const UPDATE_SETTINGS = gql`
+  mutation UpdateSettings($input: JSON!) {
+    updateSettings(input: $input) {
+      restartRequired
+      values
+      warnings
+    }
+  }
+`;
+
+// --- System Vars ---
+
+export const GET_VARS = gql`
+  query GetVars {
+    vars {
+      id
+      version
+      name
+      timeZone
+      comment
+      security
+      workgroup
+      domain
+      domainShort
+      hideDotFiles
+      localMaster
+      enableFruit
+      useNtp
+      ntpServer1
+      ntpServer2
+      ntpServer3
+      ntpServer4
+      sysModel
+      sysArraySlots
+      sysCacheSlots
+      sysFlashSlots
+      useSsl
+      port
+      portssl
+      localTld
+      bindMgt
+      useTelnet
+      porttelnet
+      useSsh
+      portssh
+      startPage
+      startArray
+      spindownDelay
+      queueDepth
+      spinupGroups
+      defaultFormat
+      defaultFsType
+      shutdownTimeout
+      shareDisk
+      shareUser
+      shareUserInclude
+      shareUserExclude
+      shareSmbEnabled
+      shareNfsEnabled
+      shareAfpEnabled
+      shareInitialOwner
+      shareInitialGroup
+      shareCacheEnabled
+      shareCacheFloor
+      shareMoverSchedule
+      shareMoverLogging
+      shareAvahiEnabled
+      shareAvahiSmbName
+      shareAvahiSmbModel
+      shareAvahiAfpName
+      shareAvahiAfpModel
+      safeMode
+      startMode
+      configValid
+      joinStatus
+      deviceCount
+      flashGuid
+      flashProduct
+      flashVendor
+      regCheck
+      regTy
+      regState
+      regTo
+      sbName
+      sbVersion
+      sbState
+      sbClean
+      sbNumDisks
+      mdColor
+      mdNumDisks
+      mdNumDisabled
+      mdNumInvalid
+      mdNumMissing
+      mdNumNew
+      mdNumErased
+      mdResync
+      mdResyncAction
+      mdState
+      mdVersion
+      cacheNumDevices
+      cacheSbNumDisks
+      fsState
+      fsProgress
+      fsCopyPrcnt
+      fsNumMounted
+      fsNumUnmountable
+      shareCount
+      shareSmbCount
+      shareNfsCount
+      shareAfpCount
+      shareMoverActive
+    }
+  }
+`;
+
+// --- OIDC Provider ---
+
+export const GET_OIDC_CONFIGURATION = gql`
+  query GetOidcConfiguration {
+    oidcConfiguration {
+      providers {
+        id
+        name
+        issuerUrl
+        clientId
+        clientSecret
+        scopes
+        groupClaim
+        adminGroup
+        allowedGroups
+        autoLogin
+        showOnLoginPage
+        buttonLabel
+        buttonColor
+        buttonTextColor
+        buttonIcon
+      }
+      allowedOrigins
+    }
+  }
+`;
+
+export const GET_OIDC_PROVIDER = gql`
+  query GetOidcProvider($id: PrefixedID!) {
+    oidcProvider(id: $id) {
+      id
+      name
+      issuerUrl
+      clientId
+      clientSecret
+      scopes
+      groupClaim
+      adminGroup
+      allowedGroups
+      autoLogin
+      showOnLoginPage
+      buttonLabel
+      buttonColor
+      buttonTextColor
+      buttonIcon
+    }
+  }
+`;
+
+export const CREATE_OIDC_PROVIDER = gql`
+  mutation CreateOidcProvider($input: CreateOidcProviderInput!) {
+    createOidcProvider(input: $input) {
+      id
+      name
+      issuerUrl
+      clientId
+      clientSecret
+      scopes
+      groupClaim
+      adminGroup
+      allowedGroups
+      autoLogin
+      showOnLoginPage
+      buttonLabel
+      buttonColor
+      buttonTextColor
+      buttonIcon
+    }
+  }
+`;
+
+export const UPDATE_OIDC_PROVIDER = gql`
+  mutation UpdateOidcProvider($input: UpdateOidcProviderInput!) {
+    updateOidcProvider(input: $input) {
+      id
+      name
+      issuerUrl
+      clientId
+      clientSecret
+      scopes
+      groupClaim
+      adminGroup
+      allowedGroups
+      autoLogin
+      showOnLoginPage
+      buttonLabel
+      buttonColor
+      buttonTextColor
+      buttonIcon
+    }
+  }
+`;
+
+export const DELETE_OIDC_PROVIDER = gql`
+  mutation DeleteOidcProvider($id: PrefixedID!) {
+    deleteOidcProvider(id: $id)
+  }
+`;
+
+// --- Docker Organizer ---
+
+export const GET_DOCKER_ORGANIZER = gql`
+  query GetDockerOrganizer {
+    docker {
+      organizer {
+        folders {
+          id
+          name
+          icon
+          containers
+          expanded
+        }
+        preferences {
+          viewMode
+          sortBy
+          sortOrder
+        }
+      }
+    }
+  }
+`;
+
+export const CREATE_DOCKER_FOLDER = gql`
+  mutation CreateDockerFolder($input: CreateDockerFolderInput!) {
+    docker {
+      createDockerFolder(input: $input) {
+        id
+        name
+        icon
+        containers
+        expanded
+      }
+    }
+  }
+`;
+
+export const RENAME_DOCKER_FOLDER = gql`
+  mutation RenameDockerFolder($input: RenameDockerFolderInput!) {
+    docker {
+      renameDockerFolder(input: $input) {
+        id
+        name
+        icon
+        containers
+        expanded
+      }
+    }
+  }
+`;
+
+export const DELETE_DOCKER_FOLDER = gql`
+  mutation DeleteDockerFolder($id: PrefixedID!) {
+    docker {
+      deleteDockerFolder(id: $id)
+    }
+  }
+`;
+
+export const UPDATE_DOCKER_VIEW_PREFERENCES = gql`
+  mutation UpdateDockerViewPreferences($input: DockerViewPreferencesInput!) {
+    docker {
+      updateDockerViewPreferences(input: $input) {
+        viewMode
+        sortBy
+        sortOrder
+      }
+    }
+  }
+`;

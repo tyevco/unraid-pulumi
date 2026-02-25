@@ -529,6 +529,101 @@
         "port": { "type": "integer", "description": "Remote access port." }
       },
       "required": ["accessType"]
+    },
+    "unraid:index:UnifiedSettings": {
+      "description": "Manages the unified settings system on the Unraid server. This provides access to the JSON Schema-based settings form, which may include plugin configurations and system settings.",
+      "inputProperties": {
+        "values": {
+          "type": "object",
+          "additionalProperties": { "$ref": "pulumi.json#/Any" },
+          "description": "The settings values to apply. Must conform to the server's dataSchema."
+        }
+      },
+      "requiredInputs": ["values"],
+      "properties": {
+        "values": {
+          "type": "object",
+          "additionalProperties": { "$ref": "pulumi.json#/Any" },
+          "description": "The current settings values."
+        },
+        "dataSchema": {
+          "type": "object",
+          "additionalProperties": { "$ref": "pulumi.json#/Any" },
+          "description": "The JSON Schema describing available settings fields."
+        },
+        "uiSchema": {
+          "type": "object",
+          "additionalProperties": { "$ref": "pulumi.json#/Any" },
+          "description": "The UI schema for rendering the settings form."
+        },
+        "restartRequired": {
+          "type": "boolean",
+          "description": "Whether a server restart is required after applying these settings."
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Any warnings from the settings update."
+        }
+      },
+      "required": ["values"]
+    },
+    "unraid:index:OidcProvider": {
+      "description": "Manages an OIDC/SSO provider configuration on the Unraid server for single sign-on authentication.",
+      "inputProperties": {
+        "name": { "type": "string", "description": "Display name for the OIDC provider." },
+        "issuerUrl": { "type": "string", "description": "The OIDC issuer URL." },
+        "clientId": { "type": "string", "description": "The OIDC client ID." },
+        "clientSecret": { "type": "string", "description": "The OIDC client secret.", "secret": true },
+        "scopes": { "type": "array", "items": { "type": "string" }, "description": "OAuth scopes to request." },
+        "groupClaim": { "type": "string", "description": "The claim name for group membership." },
+        "adminGroup": { "type": "string", "description": "The group name that maps to admin role." },
+        "allowedGroups": { "type": "array", "items": { "type": "string" }, "description": "Groups allowed to log in." },
+        "autoLogin": { "type": "boolean", "description": "Whether to auto-redirect to this provider." },
+        "showOnLoginPage": { "type": "boolean", "description": "Whether to show button on login page." },
+        "buttonLabel": { "type": "string", "description": "Login button label text." },
+        "buttonColor": { "type": "string", "description": "Login button background color." },
+        "buttonTextColor": { "type": "string", "description": "Login button text color." },
+        "buttonIcon": { "type": "string", "description": "Login button icon." }
+      },
+      "requiredInputs": ["name", "issuerUrl", "clientId"],
+      "properties": {
+        "name": { "type": "string" },
+        "issuerUrl": { "type": "string" },
+        "clientId": { "type": "string" },
+        "clientSecret": { "type": "string", "secret": true },
+        "scopes": { "type": "array", "items": { "type": "string" } },
+        "groupClaim": { "type": "string" },
+        "adminGroup": { "type": "string" },
+        "allowedGroups": { "type": "array", "items": { "type": "string" } },
+        "autoLogin": { "type": "boolean" },
+        "showOnLoginPage": { "type": "boolean" },
+        "buttonLabel": { "type": "string" },
+        "buttonColor": { "type": "string" },
+        "buttonTextColor": { "type": "string" },
+        "buttonIcon": { "type": "string" }
+      },
+      "required": ["name", "issuerUrl", "clientId"]
+    },
+    "unraid:index:DockerFolder": {
+      "description": "Manages a Docker organizer folder on the Unraid WebUI. Folders group containers for better organization.",
+      "inputProperties": {
+        "name": { "type": "string", "description": "The folder name." },
+        "icon": { "type": "string", "description": "The folder icon." },
+        "containers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Container names to include in this folder."
+        }
+      },
+      "requiredInputs": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "The folder name." },
+        "icon": { "type": "string", "description": "The folder icon." },
+        "containers": { "type": "array", "items": { "type": "string" }, "description": "Containers in this folder." },
+        "expanded": { "type": "boolean", "description": "Whether the folder is expanded in the UI." }
+      },
+      "required": ["name"]
     }
   },
   "functions": {
@@ -699,6 +794,99 @@
           }
         },
         "required": ["accessUrls"]
+      }
+    },
+    "unraid:index:getSystemVars": {
+      "description": "Get all system configuration variables from the Unraid server (130+ fields covering SMB, NFS, SSL, SSH, array, mover, shares, and more).",
+      "outputs": {
+        "properties": {
+          "name": { "type": "string", "description": "Server name" },
+          "version": { "type": "string", "description": "Unraid version" },
+          "timeZone": { "type": "string", "description": "Server timezone" },
+          "security": { "type": "string", "description": "Security mode" },
+          "workgroup": { "type": "string", "description": "SMB workgroup" },
+          "useSsl": { "type": "boolean", "description": "SSL enabled" },
+          "port": { "type": "integer", "description": "HTTP port" },
+          "portssl": { "type": "integer", "description": "HTTPS port" },
+          "useSsh": { "type": "boolean", "description": "SSH enabled" },
+          "portssh": { "type": "integer", "description": "SSH port" },
+          "startArray": { "type": "boolean", "description": "Auto-start array on boot" },
+          "spindownDelay": { "type": "string", "description": "Disk spindown delay" },
+          "defaultFsType": { "type": "string", "description": "Default filesystem type" },
+          "shutdownTimeout": { "type": "integer", "description": "Shutdown timeout" },
+          "shareSmbEnabled": { "type": "boolean", "description": "SMB sharing enabled" },
+          "shareNfsEnabled": { "type": "boolean", "description": "NFS sharing enabled" },
+          "shareMoverSchedule": { "type": "string", "description": "Mover schedule" },
+          "shareMoverActive": { "type": "boolean", "description": "Mover currently active" },
+          "mdState": { "type": "string", "description": "Array state" },
+          "mdNumDisks": { "type": "integer", "description": "Number of array disks" },
+          "fsState": { "type": "string", "description": "Filesystem state" },
+          "regTy": { "type": "string", "description": "Registration type" },
+          "regState": { "type": "string", "description": "Registration state" },
+          "configValid": { "type": "boolean", "description": "Configuration validity" }
+        },
+        "required": ["name"]
+      }
+    },
+    "unraid:index:getSettings": {
+      "description": "Get the unified settings including JSON data schema, UI schema, and current values. Also returns API config and SSO provider list.",
+      "outputs": {
+        "properties": {
+          "dataSchema": {
+            "type": "object",
+            "additionalProperties": { "$ref": "pulumi.json#/Any" },
+            "description": "JSON Schema describing available settings fields"
+          },
+          "uiSchema": {
+            "type": "object",
+            "additionalProperties": { "$ref": "pulumi.json#/Any" },
+            "description": "UI schema for rendering the settings form"
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": { "$ref": "pulumi.json#/Any" },
+            "description": "Current settings values"
+          },
+          "apiVersion": { "type": "string", "description": "API version" },
+          "apiPlugins": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of API plugins"
+          },
+          "sandbox": { "type": "boolean", "description": "GraphQL sandbox enabled" }
+        },
+        "required": ["values"]
+      }
+    },
+    "unraid:index:getDockerOrganizer": {
+      "description": "Get the Docker organizer configuration including folders and view preferences.",
+      "outputs": {
+        "properties": {
+          "folders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "icon": { "type": "string" },
+                "containers": { "type": "array", "items": { "type": "string" } },
+                "expanded": { "type": "boolean" }
+              }
+            },
+            "description": "Docker organizer folders"
+          },
+          "preferences": {
+            "type": "object",
+            "properties": {
+              "viewMode": { "type": "string" },
+              "sortBy": { "type": "string" },
+              "sortOrder": { "type": "string" }
+            },
+            "description": "View preferences"
+          }
+        },
+        "required": ["folders"]
       }
     }
   },
